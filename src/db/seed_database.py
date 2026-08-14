@@ -1,15 +1,3 @@
-"""Loads synthetic seed data into the source (operational) database.
-
-Dev/test only -- unlike src/db/apply_schema.py, this inserts fake rows and
-should never be pointed at a shared/staging/prod database. Scripts are
-plain, idempotent .sql files under sql/transaction_schema/seeds/ (sibling
-of the schema/ folder -- see src/db/apply_schema.py for that), applied in
-filename order. Safe to re-run: every seed script is guarded by
-IF NOT EXISTS (SELECT 1 FROM ...), so running this twice is a no-op the
-second time.
-"""
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 

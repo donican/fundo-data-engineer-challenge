@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps sh test init-db seed-db clean
+.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load clean
 
 up:
 	docker compose up -d
@@ -26,6 +26,12 @@ init-db:
 
 seed-db:
 	docker compose exec pipeline python -m src.db.seed_database
+
+init-warehouse:
+	docker compose exec pipeline python -m src.db.apply_warehouse_schema
+
+full-load:
+	docker compose exec pipeline python -m src.etl.full_loader
 
 clean:
 	docker compose down -v
