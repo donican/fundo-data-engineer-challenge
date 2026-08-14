@@ -79,11 +79,22 @@ def test_advances_status_distribution(engine: Engine) -> None:
 
 
 def test_transactions_have_simulated_updates(engine: Engine) -> None:
+    """Every 500th transaction is seeded with updated_at a day after
+    created_at (seeds/004_transactions.sql) -- except transaction_id
+    100000, whose base_ts is SYSUTCDATETIME() with zero offset. Since
+    100000 is also divisible by 500, its LEAST(base_ts + 1 day,
+    SYSUTCDATETIME()) cap collapses to base_ts itself (SQL Server
+    evaluates SYSUTCDATETIME() once per statement, so both calls return
+    the same instant), leaving updated_at == created_at for that one row.
+    So the seeded baseline is deterministically 199, not 200. `make
+    simulate-activity` adds more update cases on top of that, so this is
+    a floor.
+    """
     updated_after_created = _scalar(
         engine,
         "SELECT COUNT(*) FROM dbo.Transactions WHERE updated_at > created_at",
     )
-    assert updated_after_created >= 200
+    assert updated_after_created >= 199
 
 
 def test_transaction_customer_matches_card_owner(engine: Engine) -> None:
