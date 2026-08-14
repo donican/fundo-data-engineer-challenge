@@ -26,6 +26,14 @@ make benchmark
 
 Seeds a fresh batch of transaction activity, then times an incremental load against a full reload of the same table.
 
+## Prove reconciliation catches real problems
+
+```
+make break-warehouse && make reconcile
+```
+
+`break-warehouse` intentionally corrupts the DuckDB warehouse (deletes a few transactions, points a few at a nonexistent card) without touching the source, so `reconcile` fails on purpose -- row-count parity and referential integrity, both reported as FAIL. Repair with `make full-load && make incremental-load`.
+
 ## Reset
 
 ```
@@ -34,4 +42,4 @@ make clean && rm -f data/warehouse.duckdb
 
 ---
 
-Each step above is also available as its own `make` target (`init-db`, `seed-db`, `full-load`, `incremental-load`, `dedup`, `reconcile`, `simulate-activity`, `break-warehouse` to test the reconciliation FAIL path, etc.) — see the `Makefile`.
+Each step above is also available as its own `make` target (`init-db`, `seed-db`, `full-load`, `incremental-load`, `dedup`, `reconcile`, `simulate-activity`, etc.) -- see the `Makefile`.
