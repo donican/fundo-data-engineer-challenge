@@ -1,3 +1,35 @@
+# Summary for reviewers
+
+Read this before the rest of the doc. Below is the design log this points back to.
+
+## Solved / skipped
+- Built: SQL Server schema + seed data, DuckDB warehouse, full-load (Customers/Advances/Cards), incremental/CDC (Transactions), dedup detection, reconciliation.
+- Skipped dedup merge execution, only detection/classification. Getting the auto-merge vs. needs-review rule right was the actual hard part; executing the reassignment is mechanical once that decision exists.
+- Skipped delete detection on Transactions, assumed create/update only, per the prompt. A timestamp watermark can't see a row that disappeared.
+- Skipped a version table, a scratch table, excluding test data from merges, and an automated recovery test. Reasons for each are in the log below.
+- Left government_id unconstrained on purpose (see Identity rules).
+
+## Measured vs. estimated
+- Measured: 5,000 customers / 2,000 advances / 6,000 cards / 100,000 transactions seeded; 100 duplicate-document groups (4,900 distinct); 1,000 multi-card customers; incremental load moved 1,000 rows in 0.070s vs. a full reload moving 100,500 rows in 1.682s (24.1x faster, 0.995% of the volume); reconcile correctly caught an injected row-count mismatch and 5 orphan rows.
+- Estimated: everything about cost, and whether that 24x ratio holds at production scale. No real infrastructure was billed here, this is projection.
+
+## Per-table strategy
+- Full-load: Customers, Advances, Cards. They don't grow meaningfully, so a full reload is cheap and always a perfect mirror.
+- Incremental/CDC: Transactions. Largest and fastest-growing table, so cost should track activity, not the whole table's history.
+
+## Cost impact (estimated)
+- Full-load cost scales with table size; incremental scales with the delta. Transactions is the one table where that gap actually matters, hence the one table with CDC.
+- Storage cost doesn't change with load strategy, only with total data volume.
+- Reconciliation adds a small, flat cost per run, cheap insurance against a silent bad load.
+
+## Identity rules
+- Proves identity: government_id. Only signal used to merge customers.
+- Only suggests identity: email/phone, can be shared, so never used to merge, just shown to the analyst on a needs_review case.
+- Malformed contacts: not validated or cleaned. Doesn't matter for correctness since they're never used to match.
+- Funded customers: 0 protected advances -> auto-merge by recency; 1 protected -> auto-merge, the protected one survives; 2+ protected -> needs_review.
+- Cards follow the customer decision, move with the survivor, wait if blocked. Only the decision is implemented, not the reassignment.
+- Test data: no is_test flag anywhere. Everything is treated as real.
+
 # Architecture decision:
 
 - I will use SQL Server as the operational database, since it better represents the proposed scenario and offers more compatibility for a possible migration to production.
@@ -45,3 +77,8 @@ Referential integrity inside the warehouse (orphan foreign keys). Since DuckDB i
 - Both loaders write through an explicit DuckDB transaction (commit/rollback), so a crash mid-write (after the destructive half of the statement because of a TRUNCATE, or the DELETE half of the incremental upsert but before the compensating INSERT) leaves the target table exactly as it was, not half-truncated.
 - The incremental loader's watermark is never stored in a separate state table; it's always MAX(updated_at) recomputed live from transactions itself. So if a run dies before committing, the watermark is unchanged, and the very next run (no special repair path, just re-running the same command) picks up the same delta and lands it correctly.
 - I prototyped a test for this (monkeypatching the DuckDB connection to raise mid-transaction, then asserting the row count survives and a retry recovers), but the setup needed to fake a mid-transaction crash convincingly added more test complexity than it was worth for this exercise. Leaving it as a documented guarantee rather than an automated one.
+
+
+## AI usage:
+- All decisions in this project, architecture, modeling, scope cuts, the identity rules, were mine.
+- I used AI only for manual, reviewed processes: implementing code and SQL from decisions I had already made, drafting and trimming text once I'd decided what it should say, and fixing bugs I pointed it at. Nothing here reflects an AI-made judgment call, and everything it produced was reviewed and tested by me before I accepted it.
