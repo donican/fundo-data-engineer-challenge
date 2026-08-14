@@ -23,7 +23,7 @@ BEGIN
         CAST(5 + (n % 200) * 3.47 AS DECIMAL(18, 2)) AS value,
         base_ts AS occurred_at,
         base_ts AS created_at,
-        CASE WHEN n % 500 = 0 THEN DATEADD(DAY, 1, base_ts) ELSE base_ts END AS updated_at
+        CASE WHEN n % 500 = 0 THEN LEAST(DATEADD(DAY, 1, base_ts), SYSUTCDATETIME()) ELSE base_ts END AS updated_at
     FROM Rows
     OPTION (MAXRECURSION 0);
 END
