@@ -35,7 +35,17 @@ Seeds a fresh batch of transaction activity, then times an incremental load agai
 make break-warehouse && make reconcile
 ```
 
-`break-warehouse` intentionally corrupts the DuckDB warehouse (deletes a few transactions, points a few at a nonexistent card) without touching the source, so `reconcile` fails on purpose, both row-count parity and referential integrity reported as FAIL. Repair with `make full-load && make incremental-load`.
+`break-warehouse` intentionally corrupts the DuckDB warehouse (deletes a few transactions, points a few at a nonexistent card) without touching the source, so `reconcile` fails on purpose, both row-count parity and referential integrity reported as FAIL.
+
+`make full-load && make incremental-load` will NOT repair this: full-load skips Transactions by design (see src/etl/full_loader.py), and the incremental loader only pulls rows at or past its watermark, so it can't see rows corrupted below that point. Repair by resetting the warehouse file and forcing a full bootstrap:
+
+```
+rm -f data/warehouse.duckdb
+make init-warehouse
+make full-load
+make incremental-load
+make reconcile
+```
 
 ## Reset
 
