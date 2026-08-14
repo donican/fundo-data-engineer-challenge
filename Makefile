@@ -1,4 +1,9 @@
-.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load incremental-load dedup simulate-activity reconcile break-warehouse benchmark clean
+.PHONY: run up down build logs ps sh test init-db seed-db init-warehouse full-load incremental-load dedup simulate-activity reconcile break-warehouse benchmark clean
+
+# One-command entry point: builds, starts the infra, sets up both
+# databases, loads everything, and reconciles. Safe to re-run any time
+# -- every step it chains is idempotent.
+run: build up init-db seed-db init-warehouse full-load incremental-load dedup reconcile
 
 up:
 	docker compose up -d
@@ -48,7 +53,7 @@ reconcile:
 break-warehouse:
 	docker compose exec pipeline python -m src.db.break_warehouse
 
-benchmark:
+benchmark: simulate-activity
 	docker compose exec pipeline python -m src.etl.benchmark
 
 clean:
