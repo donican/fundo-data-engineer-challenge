@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load incremental-load dedup simulate-activity reconcile break-warehouse clean
+.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load incremental-load dedup simulate-activity reconcile break-warehouse benchmark clean
 
 up:
 	docker compose up -d
@@ -47,6 +47,9 @@ reconcile:
 
 break-warehouse:
 	docker compose exec pipeline python -m src.db.break_warehouse
+
+benchmark:
+	docker compose exec pipeline python -m src.etl.benchmark
 
 clean:
 	docker compose down -v
