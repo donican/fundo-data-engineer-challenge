@@ -4,13 +4,12 @@ table on every run.
 
 Per SOLUTION.md, full-load is the pattern for Customers, Advances, and
 Cards -- tables that don't grow enough to justify anything more complex.
-Transactions is included here too so there's a way to bootstrap the
-warehouse on a first run, but this is NOT the intended production pattern
-for it: SOLUTION.md calls for a separate incremental/CDC loader (not
-built yet, watermarked on updated_at) for Transactions specifically,
-since a full reload of the largest, fastest-growing table on every run is
-exactly what that design avoids. Swap Transactions over once that loader
-exists.
+
+Transactions is NOT in this list. It used to be, as a way to bootstrap
+the warehouse before the incremental/CDC loader existed -- now that
+src/etl/incremental_loader.py exists, Transactions goes through that
+instead, watermarked on updated_at, so it doesn't get fully reloaded
+(and doesn't need to be) on every run.
 
 Requires the warehouse schema to already exist -- run
 src/db/apply_warehouse_schema.py (make init-warehouse) first. Loading
@@ -24,8 +23,7 @@ BigQuery-style naming.
 
 Each table's load is timed (read from SQL Server + truncate + insert into
 DuckDB) and printed alongside the row count, plus a total across all
-tables -- useful to notice a table getting slow before it becomes a real
-problem, especially transactions as it grows.
+tables.
 """
 from __future__ import annotations
 
@@ -39,19 +37,10 @@ from sqlalchemy.engine import Engine
 
 from src.config import load_duckdb_path, load_sqlserver_config
 
-TABLES = ["Customers", "Advances", "Cards", "Transactions"]
+TABLES = ["Customers", "Advances", "Cards"]
 
 
 def full_load_table(source_engine: Engine, duckdb_con: duckdb.DuckDBPyConnection, table: str) -> int:
-    """Read dbo.<table> in full from SQL Server and replace all rows in
-    the corresponding DuckDB table (<table>, lowercased). Truncate+insert
-    inside a transaction, rather than CREATE OR REPLACE, so the table
-    keeps the schema declared in sql/warehouse_schema/ instead of being
-    recreated from an inferred one every run. DuckDB's TRUNCATE is fully
-    transactional (unlike some engines), so it's safe here and cheaper
-    than a row-by-row DELETE on a table the size of transactions.
-    Returns the row count loaded.
-    """
     df = pd.read_sql(f"SELECT * FROM dbo.{table}", source_engine)
     target = table.lower()
 
