@@ -8,9 +8,9 @@
 
 ## Customers:
 - Duplicate people: I will consider that what defines a person is their identity document, not email or phone number, which can be shared.
-- I will treat the document as document_id, already normalized.
+- I will treat the document as government_id, already normalized.
 - Malformed emails and phones: I will deliberately disregard these cases to simplify the problem and address the project's main pain points. Emails and phones will still be available to help the decision-maker resolve duplicate cases that involve advances with an untouchable status.
-- Columns: id, first_name, last_name, email, phone, document_id, created_at, updated_at.
+- Columns: customer_id, first_name, last_name, email, phone, government_id, date_of_birth, address, created_at, updated_at.
 
 ## Advances:
 - The funded and paid_off statuses are untouchable (they will not be merged before an analyst's review). I will consider one additional status, "canceled", touchable and included for completeness.
@@ -31,7 +31,7 @@
 - I will deliberately skip this part of the problem, since it doesn't add business value.
 
 ## One bad schema choice: 
-- document_id in customers should be unique (or at least carry some uniqueness guarantee), but I forced it to be a varchar with no uniqueness constraint, which allows duplicate cases to exist in the first place.
+- government_id in customers should be unique (or at least carry some uniqueness guarantee), but I forced it to be a varchar with no uniqueness constraint, which allows duplicate cases to exist in the first place.
 
 ## Test data is excluded, not merged: 
 - I will disregard this part of the project, since it's straightforward to add later. Right now I'm focused on what brings real value.

@@ -10,8 +10,7 @@ BEGIN
         date_of_birth   DATE            NULL,
         address         NVARCHAR(255)   NULL,
         created_at      DATETIME2(3)    NOT NULL CONSTRAINT DF_Customers_created_at DEFAULT SYSUTCDATETIME(),
-        updated_at      DATETIME2(3)    NOT NULL CONSTRAINT DF_Customers_updated_at DEFAULT SYSUTCDATETIME(),
-        is_deleted      BIT             NOT NULL CONSTRAINT DF_Customers_is_deleted DEFAULT 0
+        updated_at      DATETIME2(3)    NOT NULL CONSTRAINT DF_Customers_updated_at DEFAULT SYSUTCDATETIME()
     );
 
     CREATE INDEX IX_Customers_updated_at ON dbo.Customers (updated_at);
