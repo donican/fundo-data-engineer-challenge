@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps sh test clean
+.PHONY: up down build logs ps sh test init-db seed-db clean
 
 up:
 	docker compose up -d
@@ -20,6 +20,12 @@ sh:
 
 test:
 	docker compose exec pipeline pytest
+
+init-db:
+	docker compose exec pipeline python -m src.db.apply_schema
+
+seed-db:
+	docker compose exec pipeline python -m src.db.seed_database
 
 clean:
 	docker compose down -v
