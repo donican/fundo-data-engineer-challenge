@@ -37,6 +37,11 @@ services:
       - ./data:/app/data
       - ./src:/app/src
       - ./sql:/app/sql
+    # Placeholder: the base python image's default CMD needs a tty/stdin and
+    # exits immediately under `docker compose up`. Keep the container alive
+    # until there's a real entrypoint, then replace this with e.g.
+    # command: ["python", "-m", "src.main"]
+    command: ["sleep", "infinity"]
 
 volumes:
   sqlserver_data:
