@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load clean
+.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load dedup clean
 
 up:
 	docker compose up -d
@@ -32,6 +32,9 @@ init-warehouse:
 
 full-load:
 	docker compose exec pipeline python -m src.etl.full_loader
+
+dedup:
+	docker compose exec pipeline python -m src.dedup.detect_duplicates
 
 clean:
 	docker compose down -v
