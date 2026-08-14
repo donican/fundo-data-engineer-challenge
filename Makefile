@@ -1,4 +1,4 @@
-.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load incremental-load dedup simulate-activity clean
+.PHONY: up down build logs ps sh test init-db seed-db init-warehouse full-load incremental-load dedup simulate-activity reconcile clean
 
 up:
 	docker compose up -d
@@ -41,6 +41,9 @@ dedup:
 
 simulate-activity:
 	docker compose exec pipeline python -m src.db.simulate_activity
+
+reconcile:
+	docker compose exec pipeline python -m src.reconciliation.reconcile
 
 clean:
 	docker compose down -v
